@@ -183,6 +183,9 @@ importers:
       passport-microsoft:
         specifier: ^1.0.0
         version: 1.0.0
+      passport-openidconnect:
+        specifier: ^0.1.1
+        version: 0.1.1
       prisma:
         specifier: ^4.16.2
         version: 4.16.2
@@ -244,6 +247,9 @@ importers:
       '@types/passport-microsoft':
         specifier: ^0.0.0
         version: 0.0.0
+      '@types/passport-openidconnect':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@types/supertest':
         specifier: ^2.0.12
         version: 2.0.12
@@ -9973,7 +9979,6 @@ packages:
       '@types/express-serve-static-core': 4.17.31
       '@types/qs': 6.9.7
       '@types/serve-static': 1.15.0
-    dev: false
 
   /@types/flexsearch@0.7.3:
     resolution: {integrity: sha512-HXwADeHEP4exXkCIwy2n1+i0f1ilP1ETQOH5KDOugjkTFZPntWo0Gr8stZOaebkxsdx+k0X/K6obU/+it07ocg==}
@@ -10202,6 +10207,15 @@ packages:
       '@types/passport': 1.0.11
     dev: true
 
+  /@types/passport-openidconnect@0.1.0:
+    resolution: {integrity: sha512-D1wdXZNS0Uu20BZ+NSRKT2bHlvP0y3aL5vdLLBM7gsP3GLeGVmqaA1ytGNMID5sB3nDJSqbI4Vfm1rpSBbjQOA==}
+    dependencies:
+      '@types/express': 4.17.16
+      '@types/oauth': 0.9.1
+      '@types/passport': 1.0.11
+      '@types/passport-strategy': 0.2.35
+    dev: true
+
   /@types/passport-strategy@0.2.35:
     resolution: {integrity: sha512-o5D19Jy2XPFoX2rKApykY15et3Apgax00RRLf0RUotPDUsYrQa7x4howLYr9El2mlUApHmCMv5CZ1IXqKFQ2+g==}
     dependencies:
@@ -10212,7 +10226,7 @@ packages:
   /@types/passport@1.0.11:
     resolution: {integrity: sha512-pz1cx9ptZvozyGKKKIPLcVDVHwae4hrH5d6g5J+DkMRRjR3cVETb4jMabhXAUbg3Ov7T22nFHEgaK2jj+5CBpw==}
     dependencies:
-      '@types/express': 4.17.14
+      '@types/express': 4.17.16
     dev: true
 
   /@types/postman-collection@3.5.7:
@@ -21157,6 +21171,14 @@ packages:
       utils-merge: 1.0.1
     dev: false
 
+  /passport-openidconnect@0.1.1:
+    resolution: {integrity: sha512-r0QJiWEzwCg2MeCIXVP5G6YxVRqnEsZ2HpgKRthZ9AiQHJrgGUytXpsdcGF9BRwd3yMrEesb/uG/Yxb86rrY0g==}
+    engines: {node: '>= 0.6.0'}
+    dependencies:
+      oauth: 0.9.15
+      passport-strategy: 1.0.0
+    dev: false
+
   /passport-strategy@1.0.0:
     resolution: {integrity: sha512-CB97UUvDKJde2V0KDWWB3lyf6PC3FaZP7YxZ2G8OAtn9p4HI9j9JLP9qjOGZFvyl8uwNT8qM+hGnz/n16NI7oA==}
     engines: {node: '>= 0.4.0'}
@@ -25983,6 +26005,15 @@ packages:
     dependencies:
       '@vue/devtools-api': 6.5.0
       vue: 3.2.45
+
+  /vue-router@4.2.4(vue@3.2.45):
+    resolution: {integrity: sha512-9PISkmaCO02OzPVOMq2w82ilty6+xJmQrarYZDkjZBfl4RvYAlt4PKnEX21oW4KTtWfa9OuO/b3qk1Od3AEdCQ==}
+    peerDependencies:
+      vue: ^3.2.0
+    dependencies:
+      '@vue/devtools-api': 6.5.0
+      vue: 3.2.45
+    dev: true
 
   /vue-router@4.2.4(vue@3.3.4):
     resolution: {integrity: sha512-9PISkmaCO02OzPVOMq2w82ilty6+xJmQrarYZDkjZBfl4RvYAlt4PKnEX21oW4KTtWfa9OuO/b3qk1Od3AEdCQ==}
