@@ -26,12 +26,13 @@
                 @close-tab="removeTab(tab.id)"
                 @close-other-tabs="closeOtherTabsAction(tab.id)"
                 @duplicate-tab="duplicateTab(tab.id)"
+                @share-tab-request="shareTabRequest(tab.id)"
               />
             </template>
             <template #suffix>
               <span
                 v-if="tab.document.isDirty"
-                class="flex items-center justify-center text-secondary group-hover:hidden w-4"
+                class="flex w-4 items-center justify-center text-secondary group-hover:hidden"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -94,7 +95,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onBeforeUnmount, onBeforeMount } from "vue"
+import { ref, onMounted, onBeforeUnmount } from "vue"
 import { safelyExtractRESTRequest } from "@hoppscotch/data"
 import { translateExtURLParams } from "~/helpers/RESTExtURLParams"
 import { useRoute } from "vue-router"
@@ -114,7 +115,6 @@ import {
 } from "rxjs"
 import { useToast } from "~/composables/toast"
 import { watchDebounced } from "@vueuse/core"
-import { oauthRedirect } from "~/helpers/oauth"
 import { useReadonlyStream } from "~/composables/stream"
 import {
   changeCurrentSyncStatus,
@@ -145,6 +145,11 @@ const toast = useToast()
 const tabs = useService(RESTTabService)
 
 const currentTabID = tabs.currentTabID
+
+const currentUser = useReadonlyStream(
+  platform.auth.getCurrentUserStream(),
+  platform.auth.getCurrentUser()
+)
 
 type PopupDetails = {
   show: boolean
@@ -309,6 +314,19 @@ const onSaveModalClose = () => {
   }
 }
 
+const shareTabRequest = (tabID: string) => {
+  const tab = tabs.getTabRef(tabID)
+  if (tab.value) {
+    if (currentUser.value) {
+      invokeAction("share.request", {
+        request: tab.value.document.request,
+      })
+    } else {
+      invokeAction("modals.login.toggle")
+    }
+  }
+}
+
 const syncTabState = () => {
   if (tabStateForSync.value)
     tabs.loadTabsFromPersistedState(tabStateForSync.value)
@@ -414,28 +432,6 @@ function setupTabStateSync() {
   })
 }
 
-function oAuthURL() {
-  onBeforeMount(async () => {
-    try {
-      const tokenInfo = await oauthRedirect()
-      if (
-        typeof tokenInfo === "object" &&
-        tokenInfo.hasOwnProperty("access_token")
-      ) {
-        if (
-          tabs.currentActiveTab.value.document.request.auth.authType ===
-          "oauth-2"
-        ) {
-          tabs.currentActiveTab.value.document.request.auth.token =
-            tokenInfo.access_token
-        }
-      }
-
-      // eslint-disable-next-line no-empty
-    } catch (_) {}
-  })
-}
-
 defineActionHandler("contextmenu.open", ({ position, text }) => {
   if (text) {
     contextMenu.value = {
@@ -454,7 +450,6 @@ defineActionHandler("contextmenu.open", ({ position, text }) => {
 
 setupTabStateSync()
 bindRequestToURLParams()
-oAuthURL()
 
 defineActionHandler("rest.request.open", ({ doc }) => {
   tabs.createNewTab(doc)

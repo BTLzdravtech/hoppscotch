@@ -20,6 +20,12 @@
             <AppInterceptor />
           </template>
         </tippy>
+        <HoppButtonSecondary
+          v-if="platform.platformFeatureFlags.cookiesEnabled ?? false"
+          :label="t('app.cookies')"
+          :icon="IconCookie"
+          @click="showCookiesModal = true"
+        />
       </div>
       <div class="flex">
         <tippy
@@ -29,7 +35,7 @@
           :on-shown="() => tippyActions!.focus()"
         >
           <HoppButtonSecondary
-            :icon="IconLifeBuoy"
+            :icon="IconHelpCircle"
             class="!rounded-none"
             :label="`${t('app.help')}`"
           />
@@ -64,33 +70,18 @@
                   }
                 "
               />
-              <!--
-              <HoppSmartItem
-                ref="chat"
-                :icon="IconMessageCircle"
-                :label="`${t('app.chat_with_us')}`"
-                :shortcut="['C']"
-                @click="
-                  () => {
-                    chatWithUs()
-                    hide()
-                  }
-                "
-              />
-              -->
               <template
                 v-for="footerItem in platform.ui?.additionalFooterMenuItems"
                 :key="footerItem.id"
               >
-                <template v-if="footerItem.action.type === 'link'">
-                  <HoppSmartItem
-                    :icon="footerItem.icon"
-                    :label="footerItem.text(t)"
-                    :to="footerItem.action.href"
-                    blank
-                    @click="hide()"
-                  />
-                </template>
+                <HoppSmartItem
+                  v-if="footerItem.action.type === 'link'"
+                  :icon="footerItem.icon"
+                  :label="footerItem.text(t)"
+                  :to="footerItem.action.href"
+                  blank
+                  @click="hide()"
+                />
                 <HoppSmartItem
                   v-else
                   :icon="footerItem.icon"
@@ -175,7 +166,7 @@
           @click="COLUMN_LAYOUT = !COLUMN_LAYOUT"
         />
         <span
-          class="transition transform"
+          class="transform transition"
           :class="{
             'rotate-180': SIDEBAR_ON_LEFT,
           }"
@@ -195,12 +186,17 @@
       :show="showDeveloperOptions"
       @hide-modal="showDeveloperOptions = false"
     />
+    <CookiesAllModal
+      :show="showCookiesModal"
+      @hide-modal="showCookiesModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue"
 import { version } from "~/../package.json"
+import IconCookie from "~icons/lucide/cookie"
 import IconSidebar from "~icons/lucide/sidebar"
 import IconZap from "~icons/lucide/zap"
 import IconShare2 from "~icons/lucide/share-2"
@@ -212,7 +208,7 @@ import IconGithub from "~icons/lucide/github"
 import IconTwitter from "~icons/lucide/twitter"
 import IconUserPlus from "~icons/lucide/user-plus"
 import IconLock from "~icons/lucide/lock"
-import IconLifeBuoy from "~icons/lucide/life-buoy"
+import IconHelpCircle from "~icons/lucide/help-circle"
 import { useSetting } from "@composables/settings"
 import { useI18n } from "@composables/i18n"
 import { useReadonlyStream } from "@composables/stream"
@@ -223,7 +219,9 @@ import { invokeAction } from "@helpers/actions"
 import { HoppSmartItem } from "@hoppscotch/ui"
 
 const t = useI18n()
+
 const showDeveloperOptions = ref(false)
+const showCookiesModal = ref(false)
 
 const EXPAND_NAVIGATION = useSetting("EXPAND_NAVIGATION")
 const SIDEBAR = useSetting("SIDEBAR")

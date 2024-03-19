@@ -4,18 +4,19 @@ import { authExchange } from '@urql/exchange-auth';
 import App from './App.vue';
 
 // STYLES
-import 'virtual:windi.css';
 import '@hoppscotch/ui/style.css';
-import '../assets/scss/themes.scss';
 import '../assets/scss/styles.scss';
+import '../assets/scss/tailwind.scss';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/material-symbols-rounded';
 import '@fontsource-variable/roboto-mono';
 // END STYLES
+
 import { HOPP_MODULES } from './modules';
 import { auth } from './helpers/auth';
 import { pipe } from 'fp-ts/function';
 import * as O from 'fp-ts/Option';
+import { GRAPHQL_UNAUTHORIZED } from './helpers/errors';
 
 // Top-level await is not available in our targets
 (async () => {
@@ -40,12 +41,12 @@ import * as O from 'fp-ts/Option';
             async refreshAuth() {
               pipe(
                 await auth.performAuthRefresh(),
-                O.getOrElseW(async () => await auth.signOutUser(true))
+                O.getOrElseW(() => auth.signOutUser(true))
               );
             },
 
             didAuthError(error, _operation) {
-              return error.message === '[GraphQL] Unauthorized';
+              return error.message === GRAPHQL_UNAUTHORIZED;
             },
           };
         }),
