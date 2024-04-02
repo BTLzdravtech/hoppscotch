@@ -18,12 +18,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GqlUser } from 'src/decorators/gql-user.decorator';
 import { AuthUser } from 'src/types/AuthUser';
 import { RTCookie } from 'src/decorators/rt-cookie.decorator';
-import {
-  AuthProvider,
-  authCookieHandler,
-  authProviderCheck,
-  throwHTTPErr,
-} from './helper';
+import { AuthProvider, authCookieHandler, authProviderCheck } from './helper';
 import { GoogleSSOGuard } from './guards/google-sso.guard';
 import { GithubSSOGuard } from './guards/github-sso.guard';
 import { MicrosoftSSOGuard } from './guards/microsoft-sso-.guard';
@@ -32,6 +27,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { OidcSSOGuard } from './guards/oidc.guard';
 import { AUTH_PROVIDER_NOT_SPECIFIED } from 'src/errors';
 import { ConfigService } from '@nestjs/config';
+import { throwHTTPErr } from 'src/utils';
 
 
 @UseGuards(ThrottlerBehindProxyGuard)
