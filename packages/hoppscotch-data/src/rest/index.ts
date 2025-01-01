@@ -1,43 +1,62 @@
 import * as Eq from "fp-ts/Eq"
 import * as S from "fp-ts/string"
 import cloneDeep from "lodash/cloneDeep"
-import V0_VERSION from "./v/0"
-import V1_VERSION from "./v/1"
-import V2_VERSION from "./v/2"
-import V3_VERSION from "./v/3"
 import { createVersionedEntity, InferredEntity } from "verzod"
+import { z } from "zod"
+
 import { lodashIsEqualEq, mapThenEq, undefinedEq } from "../utils/eq"
 
-import { HoppRESTReqBody, HoppRESTHeaders, HoppRESTParams } from "./v/1"
-
-import { HoppRESTAuth } from "./v/3"
-import { HoppRESTRequestVariables } from "./v/2"
-import { z } from "zod"
+import V0_VERSION from "./v/0"
+import V1_VERSION from "./v/1"
+import V2_VERSION, { HoppRESTRequestVariables } from "./v/2"
+import V3_VERSION from "./v/3"
+import V4_VERSION from "./v/4"
+import V5_VERSION from "./v/5"
+import V6_VERSION from "./v/6"
+import V7_VERSION, { HoppRESTHeaders, HoppRESTParams } from "./v/7"
+import V8_VERSION, { HoppRESTAuth } from "./v/8"
+import V9_VERSION, { HoppRESTRequestResponses } from "./v/9"
+import V10_VERSION, { HoppRESTReqBody } from "./v/10"
 
 export * from "./content-types"
 
 export {
-  FormDataKeyValue,
-  HoppRESTReqBodyFormData,
-  HoppRESTAuthAPIKey,
   HoppRESTAuthBasic,
-  HoppRESTAuthInherit,
   HoppRESTAuthBearer,
+  HoppRESTAuthInherit,
   HoppRESTAuthNone,
-  HoppRESTReqBody,
-  HoppRESTHeaders,
 } from "./v/1"
 
+export { HoppRESTRequestVariables } from "./v/2"
+
+export { ImplicitOauthFlowParams } from "./v/3"
+
+export { HoppRESTAuthAPIKey } from "./v/4"
+
+export { AuthCodeGrantTypeParams } from "./v/5"
+
 export {
+  HoppRESTAuthAWSSignature,
+  HoppRESTHeaders,
+  HoppRESTParams,
+} from "./v/7"
+
+export {
+  ClientCredentialsGrantTypeParams,
   HoppRESTAuth,
   HoppRESTAuthOAuth2,
-  AuthCodeGrantTypeParams,
-  ClientCredentialsGrantTypeParams,
-  ImplicitOauthFlowParams,
+  HoppRESTAuthDigest,
   PasswordGrantTypeParams,
-} from "./v/3"
+} from "./v/8"
 
-export { HoppRESTRequestVariables } from "./v/2"
+export {
+  FormDataKeyValue,
+  HoppRESTResponseOriginalRequest,
+  HoppRESTRequestResponse,
+  HoppRESTRequestResponses,
+} from "./v/9"
+
+export { HoppRESTReqBody } from "./v/10"
 
 const versionedObject = z.object({
   // v is a stringified number
@@ -45,12 +64,19 @@ const versionedObject = z.object({
 })
 
 export const HoppRESTRequest = createVersionedEntity({
-  latestVersion: 3,
+  latestVersion: 10,
   versionMap: {
     0: V0_VERSION,
     1: V1_VERSION,
     2: V2_VERSION,
     3: V3_VERSION,
+    4: V4_VERSION,
+    5: V5_VERSION,
+    6: V6_VERSION,
+    7: V7_VERSION,
+    8: V8_VERSION,
+    9: V9_VERSION,
+    10: V10_VERSION,
   },
   getVersion(data) {
     // For V1 onwards we have the v string storing the number
@@ -90,9 +116,10 @@ const HoppRESTRequestEq = Eq.struct<HoppRESTRequest>({
     (arr) => arr.filter((v: any) => v.key !== "" && v.value !== ""),
     lodashIsEqualEq
   ),
+  responses: lodashIsEqualEq,
 })
 
-export const RESTReqSchemaVersion = "3"
+export const RESTReqSchemaVersion = "10"
 
 export type HoppRESTParam = HoppRESTRequest["params"][number]
 export type HoppRESTHeader = HoppRESTRequest["headers"][number]
@@ -144,6 +171,7 @@ export function safelyExtractRESTRequest(
       const result = HoppRESTAuth.safeParse(x.auth)
 
       if (result.success) {
+        //  @ts-ignore
         req.auth = result.data
       }
     }
@@ -171,6 +199,14 @@ export function safelyExtractRESTRequest(
         req.requestVariables = result.data
       }
     }
+
+    if ("responses" in x) {
+      const result = HoppRESTRequestResponses.safeParse(x.responses)
+
+      if (result.success) {
+        req.responses = result.data
+      }
+    }
   }
 
   return req
@@ -187,7 +223,7 @@ export function makeRESTRequest(
 
 export function getDefaultRESTRequest(): HoppRESTRequest {
   return {
-    v: "3",
+    v: RESTReqSchemaVersion,
     endpoint: "https://echo.hoppscotch.io",
     name: "Untitled",
     params: [],
@@ -204,6 +240,7 @@ export function getDefaultRESTRequest(): HoppRESTRequest {
       body: null,
     },
     requestVariables: [],
+    responses: {},
   }
 }
 

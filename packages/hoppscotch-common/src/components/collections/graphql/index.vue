@@ -54,6 +54,7 @@
         @add-request="addRequest($event)"
         @add-folder="addFolder($event)"
         @edit-folder="editFolder($event)"
+        @duplicate-collection="duplicateCollection($event)"
         @edit-request="editRequest($event)"
         @duplicate-request="duplicateRequest($event)"
         @select-collection="$emit('use-collection', collection)"
@@ -115,6 +116,7 @@
     <CollectionsGraphqlAddRequest
       :show="showModalAddRequest"
       :folder-path="editingFolderPath"
+      :request-context="requestContext"
       @add-request="onAddRequest($event)"
       @hide-modal="displayModalAddRequest(false)"
     />
@@ -138,6 +140,7 @@
       :folder-path="editingFolderPath"
       :request="editingRequest"
       :request-index="editingRequestIndex"
+      :request-context="editingRequest"
       :editing-request-name="editingRequest ? editingRequest.name : ''"
       @hide-modal="displayModalEditRequest(false)"
     />
@@ -167,6 +170,7 @@ import {
   editGraphqlCollection,
   editGraphqlFolder,
   moveGraphqlRequest,
+  duplicateGraphQLCollection,
 } from "~/newstore/collections"
 import IconPlus from "~icons/lucide/plus"
 import IconHelpCircle from "~icons/lucide/help-circle"
@@ -178,11 +182,7 @@ import { platform } from "~/platform"
 import { useService } from "dioc/vue"
 import { GQLTabService } from "~/services/tab/graphql"
 import { computed } from "vue"
-import {
-  HoppCollection,
-  HoppGQLRequest,
-  makeGQLRequest,
-} from "@hoppscotch/data"
+import { HoppCollection, HoppGQLRequest } from "@hoppscotch/data"
 import { Picked } from "~/helpers/types/HoppPicked"
 import { HoppInheritedProperty } from "~/helpers/types/HoppInheritedProperties"
 import { updateInheritedPropertiesForAffectedRequests } from "~/helpers/collection/collection"
@@ -192,6 +192,7 @@ import { PersistenceService } from "~/services/persistence"
 import { PersistedOAuthConfig } from "~/services/oauth/oauth.service"
 import { GQLOptionTabs } from "~/components/graphql/RequestOptions.vue"
 import { EditingProperties } from "../Properties.vue"
+import { defineActionHandler } from "~/helpers/actions"
 
 const t = useI18n()
 const toast = useToast()
@@ -199,7 +200,7 @@ const toast = useToast()
 defineProps<{
   // Whether to activate the ability to pick items (activates 'select' events)
   saveRequest: boolean
-  picked: Picked
+  picked: Picked | null
 }>()
 
 const collections = useReadonlyStream(graphqlCollections$, [], "deep")
@@ -250,7 +251,7 @@ onMounted(() => {
     return
   }
 
-  const { context, source, token }: PersistedOAuthConfig =
+  const { context, source, token, refresh_token }: PersistedOAuthConfig =
     JSON.parse(localOAuthTempConfig)
 
   if (source === "REST") {
@@ -274,6 +275,10 @@ onMounted(() => {
         const grantTypeInfo = auth.grantTypeInfo
 
         grantTypeInfo && (grantTypeInfo.token = token ?? "")
+
+        if (refresh_token && grantTypeInfo.grantType === "AUTHORIZATION_CODE") {
+          grantTypeInfo.refreshToken = refresh_token
+        }
       }
 
       editingProperties.value = unsavedCollectionProperties
@@ -324,6 +329,10 @@ const filteredCollections = computed(() => {
   }
 
   return filteredCollections
+})
+
+const requestContext = computed(() => {
+  return tabs.currentActiveTab.value.document.request
 })
 
 const displayModalAdd = (shouldDisplay: boolean) => {
@@ -379,21 +388,21 @@ const editCollection = (
   displayModalEdit(true)
 }
 
-const onAddRequest = ({
-  name,
+const duplicateCollection = ({
   path,
-  index,
+  collectionSyncID,
 }: {
-  name: string
   path: string
-  index: number
-}) => {
+  collectionSyncID?: string
+}) => duplicateGraphQLCollection(path, collectionSyncID)
+
+const onAddRequest = ({ name, path }: { name: string; path: string }) => {
   const newRequest = {
     ...tabs.currentActiveTab.value.document.request,
     name,
   }
 
-  saveGraphqlRequestAs(path, newRequest)
+  const insertionIndex = saveGraphqlRequestAs(path, newRequest)
 
   const { auth, headers } = cascadeParentCollectionForHeaderAuth(
     path,
@@ -404,7 +413,7 @@ const onAddRequest = ({
     saveContext: {
       originLocation: "user-collection",
       folderPath: path,
-      requestIndex: index,
+      requestIndex: insertionIndex,
     },
     request: newRequest,
     isDirty: false,
@@ -526,23 +535,13 @@ const selectRequest = ({
     tabs.setActiveTab(possibleTab.value.id)
     return
   }
-
   tabs.createNewTab({
     saveContext: {
       originLocation: "user-collection",
       folderPath: folderPath,
       requestIndex: requestIndex,
     },
-    request: cloneDeep(
-      makeGQLRequest({
-        name: request.name,
-        url: request.url,
-        query: request.query,
-        headers: request.headers,
-        variables: request.variables,
-        auth: request.auth,
-      })
-    ),
+    request: cloneDeep(request),
     isDirty: false,
     inheritedProperties: {
       auth,
@@ -676,4 +675,11 @@ const resetSelectedData = () => {
   editingRequest.value = null
   editingRequestIndex.value = null
 }
+
+defineActionHandler("collection.new", () => {
+  displayModalAdd(true)
+})
+defineActionHandler("modals.collection.import", () => {
+  displayModalImportExport(true)
+})
 </script>

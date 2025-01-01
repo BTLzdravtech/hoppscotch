@@ -1,9 +1,8 @@
-import { pluck, distinctUntilChanged } from "rxjs/operators"
 import { cloneDeep, defaultsDeep, has } from "lodash-es"
 import { Observable } from "rxjs"
-
-import DispatchingStore, { defineDispatchers } from "./DispatchingStore"
+import { distinctUntilChanged, pluck } from "rxjs/operators"
 import type { KeysMatching } from "~/types/ts-utils"
+import DispatchingStore, { defineDispatchers } from "./DispatchingStore"
 
 export const HoppBgColors = ["system", "light", "dark", "black"] as const
 
@@ -20,6 +19,10 @@ export const HoppAccentColors = [
   "red",
   "pink",
 ] as const
+
+export const EncodeModes = ["enable", "disable", "auto"] as const
+
+export type EncodeMode = (typeof EncodeModes)[number]
 
 export type HoppAccentColor = (typeof HoppAccentColors)[number]
 
@@ -47,6 +50,7 @@ export type SettingsDef = {
     importCurl: boolean
     codeGen: boolean
     cookie: boolean
+    multipartFormdata: boolean
   }
 
   CURRENT_INTERCEPTOR_ID: string
@@ -60,11 +64,20 @@ export type SettingsDef = {
   }
   THEME_COLOR: HoppAccentColor
   BG_COLOR: HoppBgColor
+  ENCODE_MODE: EncodeMode
   TELEMETRY_ENABLED: boolean
   EXPAND_NAVIGATION: boolean
   SIDEBAR: boolean
   SIDEBAR_ON_LEFT: boolean
   COLUMN_LAYOUT: boolean
+
+  HAS_OPENED_SPOTLIGHT: boolean
+  ENABLE_AI_EXPERIMENTS: boolean
+  AI_REQUEST_NAMING_STYLE:
+    | "DESCRIPTIVE_WITH_SPACES"
+    | "camelCase"
+    | "snake_case"
+    | "PascalCase"
 }
 
 export const getDefaultSettings = (): SettingsDef => ({
@@ -89,9 +102,11 @@ export const getDefaultSettings = (): SettingsDef => ({
     importCurl: true,
     codeGen: true,
     cookie: true,
+    multipartFormdata: true,
   },
 
-  CURRENT_INTERCEPTOR_ID: "browser", // TODO: Allow the platform definition to take this place
+  // Set empty because interceptor module will set the default value
+  CURRENT_INTERCEPTOR_ID: "",
 
   // TODO: Interceptor related settings should move under the interceptor systems
   PROXY_URL: "https://proxy.hoppscotch.io/",
@@ -104,11 +119,16 @@ export const getDefaultSettings = (): SettingsDef => ({
   },
   THEME_COLOR: "indigo",
   BG_COLOR: "system",
+  ENCODE_MODE: "enable",
   TELEMETRY_ENABLED: true,
   EXPAND_NAVIGATION: false,
   SIDEBAR: true,
   SIDEBAR_ON_LEFT: false,
   COLUMN_LAYOUT: true,
+
+  HAS_OPENED_SPOTLIGHT: false,
+  ENABLE_AI_EXPERIMENTS: true,
+  AI_REQUEST_NAMING_STYLE: "DESCRIPTIVE_WITH_SPACES",
 })
 
 type ApplySettingPayload = {
@@ -233,9 +253,9 @@ export function toggleNestedSetting<
 >(settingKey: K, property: P) {
   settingsStore.dispatch({
     dispatcher: "toggleNestedSetting",
+    // @ts-expect-error TS is not able to understand the type semantics here
     payload: {
       settingKey,
-      // @ts-expect-error TS is not able to understand the type semantics here
       property,
     },
   })
@@ -250,7 +270,6 @@ export function applySetting<K extends keyof SettingsDef>(
     payload: {
       // @ts-expect-error TS is not able to understand the type semantics here
       settingKey,
-      // @ts-expect-error TS is not able to understand the type semantics here
       value,
     },
   })
@@ -263,9 +282,9 @@ export function applyNestedSetting<
 >(settingKey: K, property: P, value: R) {
   settingsStore.dispatch({
     dispatcher: "applyNestedSetting",
+    // @ts-expect-error TS is not able to understand the type semantics here
     payload: {
       settingKey,
-      // @ts-expect-error TS is not able to understand the type semantics here
       property,
       value,
     },

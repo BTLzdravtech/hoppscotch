@@ -14,8 +14,8 @@ import { OidcStrategy } from './strategies/oidc.strategy';
 import { AuthProvider, authProviderCheck } from './helper';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {
+  getConfiguredSSOProvidersFromInfraConfig,
   isInfraConfigTablePopulated,
-  loadInfraConfiguration,
 } from 'src/infra-config/helper';
 import { InfraConfigModule } from 'src/infra-config/infra-config.module';
 
@@ -44,8 +44,8 @@ export class AuthModule {
       return { module: AuthModule };
     }
 
-    const env = await loadInfraConfiguration();
-    const allowedAuthProviders = env.INFRA.VITE_ALLOWED_AUTH_PROVIDERS;
+    const allowedAuthProviders =
+      await getConfiguredSSOProvidersFromInfraConfig();
 
     const providers = [
       ...(authProviderCheck(AuthProvider.GOOGLE, allowedAuthProviders)

@@ -5,7 +5,6 @@ import { def as collectionsDef } from "./platform/collections/collections.platfo
 import { def as settingsDef } from "./platform/settings/settings.platform"
 import { def as historyDef } from "./platform/history/history.platform"
 import { proxyInterceptor } from "@hoppscotch/common/platform/std/interceptors/proxy"
-import { ExtensionInspectorService } from "@hoppscotch/common/platform/std/inspections/extension.inspector"
 import { NativeInterceptorService } from "./platform/interceptors/native"
 import { nextTick, ref, watch } from "vue"
 import { emit, listen } from "@tauri-apps/api/event"
@@ -15,6 +14,7 @@ import { appWindow } from "@tauri-apps/api/window"
 import { stdFooterItems } from "@hoppscotch/common/platform/std/ui/footerItem"
 import { stdSupportOptionItems } from "@hoppscotch/common/platform/std/ui/supportOptionsItem"
 import { ioDef } from "./platform/io"
+import { interopModule } from "./interop"
 
 const headerPaddingLeft = ref("0px")
 const headerPaddingTop = ref("0px")
@@ -46,16 +46,17 @@ const headerPaddingTop = ref("0px")
       settings: settingsDef,
       history: historyDef,
     },
+    addedHoppModules: [interopModule],
     interceptors: {
       default: "native",
       interceptors: [
         { type: "service", service: NativeInterceptorService },
-        { type: "standalone", interceptor: proxyInterceptor },
+        {
+          type: "standalone",
+          interceptor: { ...proxyInterceptor, supportsDigestAuth: true },
+        },
       ],
     },
-    additionalInspectors: [
-      { type: "service", service: ExtensionInspectorService },
-    ],
     platformFeatureFlags: {
       exportAsGIST: false,
       hasTelemetry: false,

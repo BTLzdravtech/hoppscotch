@@ -4,7 +4,7 @@
 
 import { Ref, onBeforeUnmount, onMounted, reactive, watch } from "vue"
 import { BehaviorSubject } from "rxjs"
-import { HoppRESTDocument } from "./rest/document"
+import { HoppRequestDocument } from "./rest/document"
 import { Environment, HoppGQLRequest, HoppRESTRequest } from "@hoppscotch/data"
 import { RESTOptionTabs } from "~/components/http/RequestOptions.vue"
 import { HoppGQLSaveContext } from "./graphql/document"
@@ -16,7 +16,7 @@ export type HoppAction =
   | "request.send-cancel" // Send/Cancel a Hoppscotch Request
   | "request.reset" // Clear request data
   | "request.share-request" // Share Request
-  | "request.save" // Save to Collections
+  | "request-response.save" // Save Request or Response
   | "request.save-as" // Save As
   | "request.rename" // Rename request on REST or GraphQL
   | "request.method.next" // Select Next Method
@@ -36,6 +36,7 @@ export type HoppAction =
   | "collection.new" // Create root collection
   | "flyouts.chat.open" // Shows the keybinds flyout
   | "flyouts.keybinds.toggle" // Shows the keybinds flyout
+  | "modals.collection.import" // Shows the collection import modal
   | "modals.search.toggle" // Shows the search modal
   | "modals.support.toggle" // Shows the support modal
   | "modals.share.toggle" // Shows the share modal
@@ -60,8 +61,11 @@ export type HoppAction =
   | "settings.theme.dark" // Use dark theme
   | "settings.theme.black" // Use black theme
   | "response.preview.toggle" // Toggle response preview
+  | "response.schema.toggle" // Toggle response data schema
   | "response.file.download" // Download response as file
   | "response.copy" // Copy response to clipboard
+  | "response.save" // Save response
+  | "response.save-as-example" // Save response as example
   | "modals.login.toggle" // Login to Hoppscotch
   | "history.clear" // Clear REST History
   | "user.login" // Login to Hoppscotch
@@ -74,6 +78,7 @@ export type HoppAction =
   | "share.request" // Share REST request
   | "tab.duplicate-tab" // Duplicate REST request
   | "gql.request.open" // Open GraphQL request
+  | "agent.open-registration-modal" // Open Hoppscotch Agent registration modal
 
 /**
  * Defines the arguments, if present for a given type that is required to be passed on
@@ -115,12 +120,12 @@ type HoppActionArgsMap = {
     teamId: string
   }
   "rest.request.open": {
-    doc: HoppRESTDocument
+    doc: HoppRequestDocument
   }
   "request.save-as":
     | {
         requestType: "rest"
-        request: HoppRESTRequest
+        request: HoppRESTRequest | null
       }
     | {
         requestType: "gql"

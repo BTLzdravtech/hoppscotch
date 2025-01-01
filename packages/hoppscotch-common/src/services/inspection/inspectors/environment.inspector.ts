@@ -8,7 +8,10 @@ import {
 import { Service } from "dioc"
 import { Ref, markRaw } from "vue"
 import IconPlusCircle from "~icons/lucide/plus-circle"
-import { HoppRESTRequest } from "@hoppscotch/data"
+import {
+  HoppRESTRequest,
+  HoppRESTResponseOriginalRequest,
+} from "@hoppscotch/data"
 import {
   AggregateEnvironment,
   aggregateEnvsWithSecrets$,
@@ -53,9 +56,7 @@ export class EnvironmentInspectorService extends Service implements Inspector {
     }
   )[0]
 
-  constructor() {
-    super()
-
+  override onServiceInit() {
     this.inspection.registerInspector(this)
   }
 
@@ -73,8 +74,15 @@ export class EnvironmentInspectorService extends Service implements Inspector {
 
     const currentTab = this.restTabs.currentActiveTab.value
 
+    const currentTabRequest =
+      currentTab.document.type === "request"
+        ? currentTab.document.request
+        : currentTab.document.type === "example-response"
+          ? currentTab.document.response.originalRequest
+          : null
+
     const environmentVariables = [
-      ...currentTab.document.request.requestVariables,
+      ...(currentTabRequest?.requestVariables ?? []),
       ...this.aggregateEnvsWithSecrets.value,
     ]
 
@@ -92,7 +100,8 @@ export class EnvironmentInspectorService extends Service implements Inspector {
               position:
                 locations.type === "url" ||
                 locations.type === "body" ||
-                locations.type === "response"
+                locations.type === "response" ||
+                locations.type === "body-content-type-header"
                   ? "key"
                   : locations.position,
               index: index,
@@ -182,9 +191,16 @@ export class EnvironmentInspectorService extends Service implements Inspector {
 
             const currentTab = this.restTabs.currentActiveTab.value
 
+            const currentTabRequest =
+              currentTab.document.type === "request"
+                ? currentTab.document.request
+                : currentTab.document.type === "example-response"
+                  ? currentTab.document.response.originalRequest
+                  : null
+
             const environmentVariables =
               this.filterNonEmptyEnvironmentVariables([
-                ...currentTab.document.request.requestVariables.map((env) => ({
+                ...(currentTabRequest?.requestVariables ?? []).map((env) => ({
                   ...env,
                   secret: false,
                   sourceEnv: "RequestVariable",
@@ -207,7 +223,8 @@ export class EnvironmentInspectorService extends Service implements Inspector {
                     position:
                       locations.type === "url" ||
                       locations.type === "body" ||
-                      locations.type === "response"
+                      locations.type === "response" ||
+                      locations.type === "body-content-type-header"
                         ? "key"
                         : locations.position,
                     index: index,
@@ -246,7 +263,10 @@ export class EnvironmentInspectorService extends Service implements Inspector {
                         "inspections.environment.add_environment_value"
                       ),
                       apply: () => {
-                        if (env.sourceEnv === "RequestVariable") {
+                        if (
+                          env.sourceEnv === "RequestVariable" &&
+                          currentTab.document.type === "request"
+                        ) {
                           currentTab.document.optionTabPreference =
                             "requestVariables"
                         } else {
@@ -280,9 +300,13 @@ export class EnvironmentInspectorService extends Service implements Inspector {
     return newErrors
   }
 
-  getInspections(req: Readonly<Ref<HoppRESTRequest>>) {
+  getInspections(
+    req: Readonly<Ref<HoppRESTRequest | HoppRESTResponseOriginalRequest>>
+  ) {
     return computed(() => {
       const results: InspectorResult[] = []
+
+      if (!req.value) return results
 
       const headers = req.value.headers
 

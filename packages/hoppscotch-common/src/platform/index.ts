@@ -1,21 +1,25 @@
-import { AuthPlatformDef } from "./auth"
-import { UIPlatformDef } from "./ui"
-import { EnvironmentsPlatformDef } from "./environments"
-import { CollectionsPlatformDef } from "./collections"
-import { SettingsPlatformDef } from "./settings"
-import { HistoryPlatformDef } from "./history"
-import { AnalyticsPlatformDef } from "./analytics"
-import { InterceptorsPlatformDef } from "./interceptors"
+import { ServiceClassInstance } from "dioc"
+import { Ref } from "vue"
 import { HoppModule } from "~/modules"
+import { AnalyticsPlatformDef } from "./analytics"
+import { AuthPlatformDef } from "./auth"
+import { CollectionsPlatformDef } from "./collections"
+import { EnvironmentsPlatformDef } from "./environments"
+import { ExperimentsPlatformDef } from "./experiments"
+import { HistoryPlatformDef } from "./history"
+import { InfraPlatformDef } from "./infra"
 import { InspectorsPlatformDef } from "./inspectors"
-import { Service } from "dioc"
+import { InterceptorsPlatformDef } from "./interceptors"
 import { IOPlatformDef } from "./io"
+import { LimitsPlatformDef } from "./limits"
+import { SettingsPlatformDef } from "./settings"
 import { SpotlightPlatformDef } from "./spotlight"
+import { UIPlatformDef } from "./ui"
 
 export type PlatformDef = {
   ui?: UIPlatformDef
   addedHoppModules?: HoppModule[]
-  addedServices?: Array<typeof Service<unknown> & { ID: string }>
+  addedServices?: Array<ServiceClassInstance<unknown>>
   auth: AuthPlatformDef
   analytics?: AnalyticsPlatformDef
   io: IOPlatformDef
@@ -45,7 +49,15 @@ export type PlatformDef = {
      * If a value is not given, then the value is assumed to be true
      */
     promptAsUsingCookies?: boolean
+
+    /**
+     * Whether to show the A/B testing workspace switcher click login flow or not
+     */
+    workspaceSwitcherLogin?: Ref<boolean>
   }
+  limits?: LimitsPlatformDef
+  infra?: InfraPlatformDef
+  experiments?: ExperimentsPlatformDef
 }
 
 export let platform: PlatformDef
