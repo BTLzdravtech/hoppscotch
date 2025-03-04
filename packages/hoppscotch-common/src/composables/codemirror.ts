@@ -358,8 +358,8 @@ export function useCodemirror(
           view.requestMeasure()
 
           if (event.target && options.contextMenuEnabled) {
-            // Debounce to make the performance better
-            debouncedTextSelection(30)()
+            // close the context menu when the editor is scrolled
+            closeContextMenu()
           }
         },
       }),
@@ -532,7 +532,8 @@ export function useCodemirror(
         cachedCursor.value.ch !== newPos.ch
       ) {
         const line = view.value.state.doc.line(newPos.line + 1)
-        const selUpdate = EditorSelection.cursor(line.from + newPos.ch - 1)
+        const ch = newPos.ch === -1 ? line.length : newPos.ch
+        const selUpdate = EditorSelection.cursor(line.from + ch)
 
         view.value?.focus()
 

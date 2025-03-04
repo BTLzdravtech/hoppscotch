@@ -48,4 +48,26 @@ export type UIPlatformDef = {
    * Additional profile Section components in the profile page
    */
   additionalProfileSections?: Component[]
+
+  /**
+   * Custom history related components to be shown in the history page
+   */
+  additionalHistoryComponent?: Component
+
+  /**
+   * Custom sidebar header item to be shown in the sidebar header
+   */
+  additionalSidebarHeaderItem?: Component
+
+  /**
+   * More info shown in the danger zone section while attempting user deletion
+   * Sample use case includes displaying the instance information on cloud instances
+   */
+  additionalUserDeletionSoleTeamOwnerInfo?: Component
+
+  /**
+   * Customize embeds appearance at the platform level
+   * Sample use case includes bringing embeds behind auth on sub domain based cloud instances
+   */
+  additionalEmbedsComponent?: Component
 }
